@@ -1,4 +1,5 @@
 using HotelBackend;
+using HotelBackend.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,8 @@ builder.Services.AddSwaggerGen();
 // Dodaj konfiguraciju za DbContext
 builder.Services.AddDbContext<HotelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 
 var app = builder.Build();

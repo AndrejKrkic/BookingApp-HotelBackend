@@ -1,4 +1,5 @@
 ﻿using HotelBackend.Models;
+using HotelBackend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,13 +10,164 @@ namespace HotelBackend.Controllers
     [Route("api/[controller]")]
     public class ReservationsController : ControllerBase
     {
-        private readonly HotelContext _context;
 
-        public ReservationsController(HotelContext context)
+        private readonly IReservationService _reservationService;
+
+
+        public ReservationsController(IReservationService reservationService)
         {
-            _context = context;
+            _reservationService = reservationService;
         }
 
+
+        [HttpPost("calculate-price")]
+        public async Task<IActionResult> CalculatePrice([FromBody] ReservationRequest request)
+        {
+            try
+            {
+                var totalPrice = await _reservationService.CalculatePriceAsync(request);
+                return Ok(new { TotalPrice = totalPrice });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateReservation([FromBody] ReservationRequest request)
+        {
+            try
+            {
+                var result = await _reservationService.CreateReservationAsync(request);
+
+                return CreatedAtAction(nameof(GetReservation), new { id = result.Reservation.Id }, result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetReservation(int id)
+        {
+            try
+            {
+                var reservation = await _reservationService.GetReservationAsync(id);
+                return Ok(reservation);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new ErrorResponse
+                {
+                    StatusCode = 404,
+                    Message = "Rezervacija nije pronađena."
+                });
+            }
+        }
+
+        [HttpGet("occupied-dates/{roomId}")]
+        public async Task<IActionResult> GetOccupiedDates(int roomId)
+        {
+            
+
+
+            try
+            {
+                var dates = await _reservationService.GetOccupiedDatesAsync(roomId);
+                return Ok(dates);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new ErrorResponse
+                {
+                    StatusCode = 404,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("cancel")]
+        public async Task<IActionResult> CancelReservation(int reservationId)
+        {
+            try
+            {
+                var success = await _reservationService.CancelReservationAsync(reservationId);
+                return Ok(new { Message = "Reservation successfully cancelled" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
+        }
+
+
+        //MOJ POKUSAJ
+        [HttpGet("get-reservation")]
+        public async Task<IActionResult> GetReservationByTokenAndEmail([FromQuery] string token, [FromQuery] string email)
+        {
+            var result = await _reservationService.GetReservationByTokenAndEmailAsync(token, email);
+
+            if (result == null)
+            {
+                return NotFound(new ErrorResponse
+                {
+                    StatusCode = 404,
+                    Message = "Rezervacija nije pronađena."
+                });
+            }
+
+            return Ok(result);
+        }
+
+
+        /*
+        [HttpGet("get-reservation")]
+        public async Task<IActionResult> GetReservationByTokenAndEmail([FromQuery] string token, [FromQuery] string email)
+        {
+            // Pronađi rezervaciju na osnovu tokena i email-a
+            var reservation = await _context.Reservations
+                .Include(r => r.ReservationGuests)  // Učitaj povezane goste
+                .ThenInclude(rg => rg.Guest)      // Učitaj goste
+                .FirstOrDefaultAsync(r => r.Token == token && r.Email == email);
+
+            if (reservation == null)
+            {
+                //return NotFound("Reservation not found.");
+                var errorResponse = new ErrorResponse
+                {
+                    StatusCode = 404,
+                    Message = "Rezervacija nije pronadjena.",
+                };
+
+                return NotFound(errorResponse);
+            }
+
+            // Kreiraj rezultat koji uključuje rezervaciju i goste
+            var result = new
+            {
+                Reservation = reservation,
+                Guests = reservation.ReservationGuests.Select(rg => rg.Guest).ToList() // Lista gostiju vezanih za rezervaciju
+            };
+
+            return Ok(result);
+        }
+
+
+        
         [HttpPost("calculate-price")]
         public async Task<IActionResult> CalculatePrice([FromBody] ReservationRequest request)
         {
@@ -197,17 +349,7 @@ namespace HotelBackend.Controllers
                 _context.ReservationGuests.Add(guestReservation);
             }
 
-            // Generiši novi promo kod za istu sobu
-            //var random = new Random();
-            //var discountPercentage = random.Next(5, 21); // Nasumično generiši popust (5%, 10%, 15%, 20%)
-            //var promoCode = new PromoCode
-            //{
-            //    Code = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(), // Kratki, nasumični kod
-            //    DiscountPercentage = discountPercentage,
-            //    RoomId = request.RoomId,
-            //    IsUsed = false
-            //};
-            //_context.PromoCodes.Add(promoCode);
+         
 
             // Definiši moguće vrednosti popusta
             var possibleDiscounts = new[] { 5, 10, 15, 20 };
@@ -255,36 +397,7 @@ namespace HotelBackend.Controllers
         }
 
 
-        [HttpGet("get-reservation")]
-        public async Task<IActionResult> GetReservationByTokenAndEmail([FromQuery] string token, [FromQuery] string email)
-        {
-            // Pronađi rezervaciju na osnovu tokena i email-a
-            var reservation = await _context.Reservations
-                .Include(r => r.ReservationGuests)  // Učitaj povezane goste
-                .ThenInclude(rg => rg.Guest)      // Učitaj goste
-                .FirstOrDefaultAsync(r => r.Token == token && r.Email == email);
-
-            if (reservation == null)
-            {
-                //return NotFound("Reservation not found.");
-                var errorResponse = new ErrorResponse
-                {
-                    StatusCode = 404,
-                    Message = "Rezervacija nije pronadjena.",
-                };
-
-                return NotFound(errorResponse);
-            }
-
-            // Kreiraj rezultat koji uključuje rezervaciju i goste
-            var result = new
-            {
-                Reservation = reservation,
-                Guests = reservation.ReservationGuests.Select(rg => rg.Guest).ToList() // Lista gostiju vezanih za rezervaciju
-            };
-
-            return Ok(result);
-        }
+       
 
 
 
@@ -348,6 +461,8 @@ namespace HotelBackend.Controllers
             return Ok("Reservation successfully cancelled.");
         }
 
+
+        */
     }
 
 
