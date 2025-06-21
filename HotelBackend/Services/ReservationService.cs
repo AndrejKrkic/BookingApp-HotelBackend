@@ -210,6 +210,13 @@ namespace HotelBackend.Services
             _context.Reservations.Update(reservation);
             await _context.SaveChangesAsync();
 
+            var promoCode = await _context.PromoCodes.FindAsync(reservation.GeneratedPromoCode);
+            if(promoCode != null)
+            {
+                promoCode.IsUsed = true;
+                await _context.SaveChangesAsync();
+            }
+            
             return true;
         }
 
