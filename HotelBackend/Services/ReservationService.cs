@@ -140,11 +140,9 @@ namespace HotelBackend.Services
             await _context.SaveChangesAsync();
 
             // Kreiraj goste na osnovu liste imena i poveži ih sa rezervacijom
-
-
-
             foreach (var guestName in request.GuestNames)
             {
+                Console.WriteLine("Gost je " + guestName);
                 var guest = new Guest
                 {
                     Name = guestName
@@ -160,10 +158,8 @@ namespace HotelBackend.Services
                     ReservationId = reservation.Id
                 };
                 _context.ReservationGuests.Add(guestReservation);
+                await _context.SaveChangesAsync();
             }
-
-
-            
 
             return new ReservationCreationResponseDto
             {
