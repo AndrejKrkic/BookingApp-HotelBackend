@@ -16,5 +16,7 @@ namespace HotelBackend.Models
         // Veza sa gostima preko pomoćne tabele
         [JsonIgnore]  // Ignoriši vezu za serijalizaciju
         public ICollection<ReservationGuest> ReservationGuests { get; set; }
+        public int UsedPromoCodeId { get; set; }
+        public int GeneratedPromoCode { get; set; }
     }
 }

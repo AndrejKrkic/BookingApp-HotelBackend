@@ -15,10 +15,6 @@ namespace HotelBackend
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<PromoCode>().HasData(
-     new PromoCode { Id = 1, Code = "DISCOUNT10", DiscountPercentage = 10, RoomId = 1, IsUsed = false },
-     new PromoCode { Id = 2, Code = "SUMMER20", DiscountPercentage = 20, RoomId = 2, IsUsed = false }
- );
 
             modelBuilder.Entity<ReservationGuest>()
             .HasKey(rg => new { rg.ReservationId, rg.GuestId }); // Sastavljeni primarni ključ

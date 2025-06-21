@@ -1,6 +1,7 @@
 ﻿using HotelBackend.DTO;
 using HotelBackend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HotelBackend.Services
@@ -29,7 +30,7 @@ namespace HotelBackend.Services
             if (!string.IsNullOrEmpty(request.PromoCode))
             {
                 var promo = await _context.PromoCodes
-                    .FirstOrDefaultAsync(p => p.Code == request.PromoCode && p.RoomId == request.RoomId && !p.IsUsed);
+                    .FirstOrDefaultAsync(p => p.Code == request.PromoCode && !p.IsUsed);
 
                 if (promo == null)
                     throw new Exception("Invalid promo code");
@@ -58,6 +59,8 @@ namespace HotelBackend.Services
            
 
             // Proveri da li postoji preklapanje sa postojećim rezervacijama
+
+            //proverava da li je unet check in bio nakon check outa bilo koje sacuvane rezervacije u bazi, i pokriva slucaj ako je ckek in bio pre check outa ali je i unet check out bio pre bilo kog check ina, pa nema preklapanja.
             var overlappingReservations = await _context.Reservations
                 .Where(r => r.RoomId == request.RoomId &&
                             !(r.CheckOut <= request.CheckInDate || r.CheckIn >= request.CheckOutDate)) // Nema preklapanja, proverava disjunkciju
@@ -69,11 +72,13 @@ namespace HotelBackend.Services
             // Izračunaj osnovnu cenu
             decimal totalPrice = numberOfNights * room.PricePerNight;
 
+            PromoCode usedPromoCode = new PromoCode();
+
             // Ako je unet promo kod, primeni popust
             if (!string.IsNullOrEmpty(request.PromoCode))
             {
                 var promo = await _context.PromoCodes
-                    .FirstOrDefaultAsync(p => p.Code == request.PromoCode && p.RoomId == request.RoomId && !p.IsUsed);
+                    .FirstOrDefaultAsync(p => p.Code == request.PromoCode && !p.IsUsed);
 
                 if (promo == null)
                     throw new Exception("Neispravan ili nepostojeći promo kod.");
@@ -81,11 +86,34 @@ namespace HotelBackend.Services
                 // Primenjujemo popust
                 totalPrice -= totalPrice * (promo.DiscountPercentage / 100);
                 promo.IsUsed = true; // Obeležimo promo kod kao iskorišćen
+                
+
+                usedPromoCode = promo;
                 _context.PromoCodes.Update(promo);
             }
 
             // Generiši nasumični token (na osnovu GUID-a)
             string token = Guid.NewGuid().ToString();
+
+
+            // Definiši moguće vrednosti popusta
+            var possibleDiscounts = new[] { 5, 10, 15, 20 };
+
+            // Generiši nasumičan indeks iz niza mogućih vrednosti
+            var random = new Random();
+            var discountPercentage = possibleDiscounts[random.Next(possibleDiscounts.Length)]; // Nasumično biraj iz niza
+
+            // Generiši novi promo kod
+            var promoCode = new PromoCode
+            {
+                Code = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(), // Kratki, nasumični kod
+                DiscountPercentage = discountPercentage,
+                IsUsed = false
+            };
+
+            _context.PromoCodes.Add(promoCode); //nakon dodavanja u context on sam dopuni ID objektu promoCode
+            await _context.SaveChangesAsync();
+
 
             // Kreiraj novu rezervaciju
             var reservation = new Reservation
@@ -96,11 +124,19 @@ namespace HotelBackend.Services
                 TotalPrice = totalPrice,
                 Email = request.Email,
                 Token = token, // Dodeljujemo generisani token
-                Status = "Active"
+                Status = "Active",
+                GeneratedPromoCode = promoCode.Id,
+                UsedPromoCodeId = usedPromoCode.Id
             };
 
             // Dodaj rezervaciju u kontekst
             _context.Reservations.Add(reservation);
+            await _context.SaveChangesAsync();
+
+            promoCode.GeneratedByReservationId = reservation.Id;
+            await _context.SaveChangesAsync();
+
+            usedPromoCode.UsedByReservationId = reservation.Id;
             await _context.SaveChangesAsync();
 
             // Kreiraj goste na osnovu liste imena i poveži ih sa rezervacijom
@@ -127,26 +163,7 @@ namespace HotelBackend.Services
             }
 
 
-
-            // Definiši moguće vrednosti popusta
-            var possibleDiscounts = new[] { 5, 10, 15, 20 };
-
-            // Generiši nasumičan indeks iz niza mogućih vrednosti
-            var random = new Random();
-            var discountPercentage = possibleDiscounts[random.Next(possibleDiscounts.Length)]; // Nasumično biraj iz niza
-
-            // Generiši novi promo kod
-            var promoCode = new PromoCode
-            {
-                Code = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(), // Kratki, nasumični kod
-                DiscountPercentage = discountPercentage,
-                RoomId = request.RoomId,
-                IsUsed = false
-            };
-
-
-            _context.PromoCodes.Add(promoCode);
-            await _context.SaveChangesAsync();
+            
 
             return new ReservationCreationResponseDto
             {

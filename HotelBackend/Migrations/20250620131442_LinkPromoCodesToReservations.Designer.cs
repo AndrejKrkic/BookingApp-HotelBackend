@@ -4,6 +4,7 @@ using HotelBackend;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelBackend.Migrations
 {
     [DbContext(typeof(HotelContext))]
-    partial class HotelContextModelSnapshot : ModelSnapshot
+    [Migration("20250620131442_LinkPromoCodesToReservations")]
+    partial class LinkPromoCodesToReservations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,12 +63,37 @@ namespace HotelBackend.Migrations
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
 
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UsedByReservationId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.ToTable("PromoCodes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "DISCOUNT10",
+                            DiscountPercentage = 10m,
+                            GeneratedByReservationId = 0,
+                            IsUsed = false,
+                            RoomId = 1,
+                            UsedByReservationId = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "SUMMER20",
+                            DiscountPercentage = 20m,
+                            GeneratedByReservationId = 0,
+                            IsUsed = false,
+                            RoomId = 2,
+                            UsedByReservationId = 0
+                        });
                 });
 
             modelBuilder.Entity("HotelBackend.Models.Reservation", b =>
