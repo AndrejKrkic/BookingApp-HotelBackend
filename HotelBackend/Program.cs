@@ -28,6 +28,7 @@ builder.Services.AddDbContext<HotelContext>(options =>
 
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IGuestService, GuestService>();
 
 
 var app = builder.Build();
