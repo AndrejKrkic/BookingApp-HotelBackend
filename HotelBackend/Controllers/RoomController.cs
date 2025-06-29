@@ -5,100 +5,113 @@ namespace HotelBackend.Controllers
     using HotelBackend.Models;
     using HotelBackend;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
+    using HotelBackend.Services;
 
     [Route("api/[controller]")]
     [ApiController]
     public class RoomController : ControllerBase
     {
 
-        private readonly HotelContext _context;
+        private readonly IRoomService _roomService;
 
-        public RoomController(HotelContext context)
+        public RoomController(IRoomService roomService)
         {
-            _context = context;
+            _roomService = roomService;
         }
 
         // GET: api/Room
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        public async Task<IActionResult> GetRooms()
         {
-            return await _context.Rooms.ToListAsync();
+            try
+            {
+                var rooms = await _roomService.GetRoomsAsync();
+                return Ok(rooms);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
         }
 
         // GET: api/Room/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Room>> GetRoom(int id)
+        public async Task<IActionResult> GetRoom(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
-
-            if (room == null)
+            try
             {
-                return NotFound();
+                var room = await _roomService.GetRoomAsync(id);
+                return Ok(room);
             }
-
-            return room;
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
         }
 
         // POST: api/Room
         [HttpPost]
-        public async Task<ActionResult<Room>> AddRoom(Room room)
+        public async Task<IActionResult> AddRoom(Room room)
         {
-            _context.Rooms.Add(room);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
+            try
+            {
+                var addedRoom = await _roomService.AddRoomAsync(room);
+                return Ok(addedRoom);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
         }
 
         // PUT: api/Room/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRoom(int id, Room room)
         {
-            if (id != room.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(room).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _roomService.UpdateRoomAsync(id, room);
+                return Ok();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!RoomExists(id))
+                return BadRequest(new ErrorResponse
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
             }
-
-            return NoContent();
         }
 
         // DELETE: api/Room/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
-            if (room == null)
+            try
             {
-                return NotFound();
+                await _roomService.DeleteRoomAsync(id);
+                return Ok();
             }
-
-            _context.Rooms.Remove(room);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool RoomExists(int id)
-        {
-            return _context.Rooms.Any(e => e.Id == id);
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
         }
     }
 

@@ -27,6 +27,7 @@ builder.Services.AddDbContext<HotelContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
 
 
 var app = builder.Build();
