@@ -112,7 +112,7 @@ namespace HotelBackend.Services
             };
 
             _context.PromoCodes.Add(promoCode); //nakon dodavanja u context on sam dopuni ID objektu promoCode
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
 
             // Kreiraj novu rezervaciju
@@ -131,10 +131,10 @@ namespace HotelBackend.Services
 
             // Dodaj rezervaciju u kontekst
             _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
             promoCode.GeneratedByReservationId = reservation.Id;
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
             usedPromoCode.UsedByReservationId = reservation.Id;
             await _context.SaveChangesAsync();

@@ -1,51 +1,40 @@
-# Hotel Room Reservation – Backend Application
+# Hotel Booking App - Backend
 
-This is the backend API for a hotel room reservation system, built using **ASP.NET Core** and **Entity Framework**. The application provides essential functionalities for managing room reservations, customers, and availability.
+This is the backend part of the Hotel Booking App built with **ASP.NET Core** and **Entity Framework Core**. It provides a RESTful API for managing hotel rooms, reservations, users, and more.
 
-## Features
-- Room management (CRUD operations)
-- Customer management
-- Reservation management
-- Real-time availability check
-- Database integration with **Entity Framework**
-- RESTful API structure
+## 🚀 Features
 
-## Technologies
-- **ASP.NET Core** – Web API framework  
-- **Entity Framework** – ORM for database management  
-- **SQL Server** – Database  
-- **C#** – Programming language  
+- Room listing and details
+- Room availability check
+- Reservation creation
+- Basic promo code system
+- Entity Framework Core integration with SQL Server
 
-## Database Structure
-The database includes the following entities:  
-- **Hotel Rooms** – Details about rooms (room type, number, status)  
-- **Customers** – Personal details of customers  
-- **Reservations** – Information about bookings (dates, room assigned, customer reference)
+## 🛠️ Technologies Used
 
-## Setup and Installation
-1. **Clone the repository**:
+- ASP.NET Core Web API (.NET 6+)
+- Entity Framework Core
+- SQL Server
+- AutoMapper
+- Dependency Injection
+- Swagger / OpenAPI
+- CORS policy setup for frontend communication
+
+## 📦 Installation & Setup
+
+1. Clone the repository:
+
    ```bash
-   git clone https://github.com/your-username/hotel-reservation-backend.git
-2. **Open the solution in Visual Studio.**:
+   git clone https://github.com/your-username/hotel-booking-backend.git
+   cd hotel-booking-backend
 
-3. Apply migrations and update the database:
-dotnet ef database update
+2. Open the solution in Visual Studio or run from CLI.
 
-4. Run the application:
-dotnet run
+3. Update the database connection string in appsettings.json:
+"ConnectionStrings": {
+  "DefaultConnection": "Server=YOUR_SERVER;Database=HotelBookingDB;Trusted_Connection=True;TrustServerCertificate=True;"
+}
 
-5. The API will be available at https://localhost:5001.
+4. Apply migrations and create the database:
 
-API Endpoints
-Here’s a summary of the key API endpoints:
-
-Method	Endpoint	Description
-GET	/api/rooms	Get a list of all rooms
-POST	/api/rooms	Add a new room
-GET	/api/reservations	Get all reservations
-POST	/api/reservations	Create a new reservation
-GET	/api/customers	Get customer details
-Future Improvements
-Authentication and authorization
-Integration with third-party payment systems
-Email notifications for booking confirmation
+5. Run the application: dotnet run
