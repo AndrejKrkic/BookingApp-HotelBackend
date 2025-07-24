@@ -10,6 +10,7 @@ namespace HotelBackend
         public DbSet<PromoCode> PromoCodes { get; set; }
         public DbSet<Guest> Guests { get; set; }
         public DbSet<ReservationGuest> ReservationGuests { get; set; }
+        public DbSet<User> Users { get; set; }
 
         public HotelContext(DbContextOptions<HotelContext> options) : base(options) { }
 
