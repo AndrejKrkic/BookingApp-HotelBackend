@@ -18,5 +18,7 @@ namespace HotelBackend.Models
         public ICollection<ReservationGuest> ReservationGuests { get; set; }
         public int UsedPromoCodeId { get; set; }
         public int GeneratedPromoCode { get; set; }
+        public int UserId { get; set; }
+        public User User { get; set; }
     }
 }

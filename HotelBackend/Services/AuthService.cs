@@ -66,7 +66,12 @@ namespace HotelBackend.Services
 
         private string GenerateToken(User user)
         {
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email) };
+            var claims = new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email)
+                    // Dodaj još po potrebi (npr. role)
+             };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
                 _config["Jwt:Key"]!));

@@ -1,18 +1,22 @@
 ﻿using HotelBackend.DTO;
 using HotelBackend.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace HotelBackend.Services
 {
     public class ReservationService : IReservationService
     {
         private readonly HotelContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReservationService(HotelContext context)
+        public ReservationService(HotelContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<decimal> CalculatePriceAsync(ReservationRequest request)
@@ -68,6 +72,15 @@ namespace HotelBackend.Services
 
             if (overlappingReservations.Any())
                 throw new Exception("Soba je već rezervisana za izabrane dane.");
+
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+
 
             // Izračunaj osnovnu cenu
             decimal totalPrice = numberOfNights * room.PricePerNight;
@@ -126,7 +139,8 @@ namespace HotelBackend.Services
                 Token = token, // Dodeljujemo generisani token
                 Status = "Active",
                 GeneratedPromoCode = promoCode.Id,
-                UsedPromoCodeId = usedPromoCode.Id
+                UsedPromoCodeId = usedPromoCode.Id,
+                UserId = userId
             };
 
             // Dodaj rezervaciju u kontekst
@@ -202,6 +216,9 @@ namespace HotelBackend.Services
             if ((reservation.CheckIn - DateTime.UtcNow).TotalDays < 5)
                 throw new Exception("Cancellation is only allowed at least 5 days before check-in");
 
+            if (reservation.Status == "Cancelled")
+                throw new Exception("Reservation is already cancelled.");
+
             reservation.Status = "Cancelled";
             _context.Reservations.Update(reservation);
             await _context.SaveChangesAsync();
@@ -235,6 +252,31 @@ namespace HotelBackend.Services
                 Reservation = reservation,
                 Guests = reservation.ReservationGuests.Select(rg => rg.Guest).ToList() // Lista gostiju vezanih za rezervaciju
             };
+
+            return result;
+        }
+
+        public async Task<List<ReservationWithGuestsDto>> GetReservationsForLoggedInUserAsync()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                throw new UnauthorizedAccessException("User is not authenticated.");
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var reservations = await _context.Reservations
+                .Where(r => r.UserId == userId)
+                .Include(r => r.ReservationGuests)
+                .ThenInclude(rg => rg.Guest)
+                .ToListAsync();
+
+            var result = reservations.Select(r => new ReservationWithGuestsDto
+            {
+                Reservation = r,
+                Guests = r.ReservationGuests.Select(rg => rg.Guest).ToList()
+            }).ToList();
 
             return result;
         }

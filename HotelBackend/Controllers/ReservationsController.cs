@@ -133,6 +133,13 @@ namespace HotelBackend.Controllers
             return Ok(result);
         }
 
+        [HttpGet("my-reservations")]
+        public async Task<IActionResult> GetMyReservations()
+        {
+            var reservations = await _reservationService.GetReservationsForLoggedInUserAsync();
+            return Ok(reservations);
+        }
+
     }
 
 
