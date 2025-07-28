@@ -1,6 +1,7 @@
 ﻿using HotelBackend.DTO;
 using HotelBackend.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -265,6 +266,27 @@ namespace HotelBackend.Services
             }
 
             int userId = int.Parse(userIdClaim.Value);
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                if (user?.Role == "Admin")
+                {
+                    var reservationsAll = await _context.Reservations
+                    .Include(r => r.ReservationGuests)
+                    .ThenInclude(rg => rg.Guest)
+                    .ToListAsync();
+
+                    var resultAll = reservationsAll.Select(r => new ReservationWithGuestsDto
+                    {
+                        Reservation = r,
+                        Guests = r.ReservationGuests.Select(rg => rg.Guest).ToList()
+                    }).ToList();
+
+                    return resultAll;
+                }
+                
+            }
 
             var reservations = await _context.Reservations
                 .Where(r => r.UserId == userId)

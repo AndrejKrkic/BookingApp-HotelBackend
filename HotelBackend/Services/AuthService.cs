@@ -29,7 +29,8 @@ namespace HotelBackend.Services
             {
                 Email = email,
                 PasswordHash = hash,
-                PasswordSalt = salt
+                PasswordSalt = salt,
+                Role = "User"
             };
 
             _context.Users.Add(user);
