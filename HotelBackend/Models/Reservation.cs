@@ -20,5 +20,6 @@ namespace HotelBackend.Models
         public int GeneratedPromoCode { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public string? DocumentImageUrl { get; set; }
     }
 }

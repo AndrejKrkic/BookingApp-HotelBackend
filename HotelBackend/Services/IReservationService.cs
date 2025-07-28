@@ -12,5 +12,7 @@ namespace HotelBackend.Services
         Task<bool> CancelReservationAsync(int reservationId);
         Task<ReservationWithGuestsDto> GetReservationByTokenAndEmailAsync(string token, string email);
         Task<List<ReservationWithGuestsDto>> GetReservationsForLoggedInUserAsync();
+        Task<bool> CheckInAsync(int reservationId, string imageUrl);
+        Task<List<Reservation>> GetAllReservationsAsync();
     }
 }

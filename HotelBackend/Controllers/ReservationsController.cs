@@ -2,6 +2,8 @@
 using HotelBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HotelBackend.DTO;
+using System.Security.Claims;
 
 namespace HotelBackend.Controllers
 {
@@ -138,6 +140,34 @@ namespace HotelBackend.Controllers
         {
             var reservations = await _reservationService.GetReservationsForLoggedInUserAsync();
             return Ok(reservations);
+        }
+
+        [HttpPost("checkin")]
+        public async Task<IActionResult> CheckIn([FromBody] CheckInRequestDto request)
+        {
+            try
+            {
+                var success = await _reservationService.CheckInAsync(request.ReservationId, request.ImageUrl);
+
+                if (!success)
+                {
+                    return NotFound(new ErrorResponse
+                    {
+                        StatusCode = 404,
+                        Message = "Reservation not found"
+                    });
+                }
+
+                return Ok(new { Message = "Successfully checked in" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    StatusCode = 400,
+                    Message = ex.Message
+                });
+            }
         }
 
     }

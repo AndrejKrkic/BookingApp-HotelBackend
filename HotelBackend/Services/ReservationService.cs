@@ -280,5 +280,27 @@ namespace HotelBackend.Services
 
             return result;
         }
+
+        public async Task<bool> CheckInAsync(int reservationId, string imageUrl)
+        {
+            var reservation = await _context.Reservations.FindAsync(reservationId);
+            if (reservation == null)
+            {
+                return false;
+            }
+
+            reservation.Status = "Checked In";
+            reservation.DocumentImageUrl = imageUrl;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<Reservation>> GetAllReservationsAsync()
+        {
+            return await _context.Reservations
+                .Include(r => r.Room)        // ako želiš da vratiš i sobu
+                .ToListAsync();
+        }
     }
 }
